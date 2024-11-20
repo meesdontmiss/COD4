@@ -1,0 +1,439 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js"></script>
+
+
+    <title>$COD4</title>
+    <style>
+        @font-face { font-family: 'Bank'; src: url('Bank.ttf') format('truetype'); }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: #333;
+            position: relative;
+            background-image: url('vveui6.gif'); /* Replace with your GIF URL */
+    background-size: cover; /* Ensures the GIF covers the entire viewport */
+    background-repeat: no-repeat; /* Prevents tiling */
+    background-position: center; /* Centers the GIF */
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        /* CRT Grainy Overlay */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300%;
+            height: 300%;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            animation: flicker 3s infinite;
+        }
+        .crt-overlay::before {
+            z-index: 999;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            background: repeating-radial-gradient(
+                circle,
+                rgba(255, 255, 255, 0.05),
+                rgba(255, 255, 255, 0.05) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            opacity: 0.2;
+            animation: move 10s linear infinite;
+        }
+        /* CRT Scanlines */
+        .crt-overlay::after {
+            z-index: 999;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.02),
+                rgba(0, 0, 0, 0.02) 2px,
+                rgba(255, 255, 255, 0.02) 2px,
+                rgba(255, 255, 255, 0.02) 4px
+            );
+            pointer-events: none;
+            z-index: 11;
+            animation: scanlines 1s linear infinite;
+        }
+        /* CRT Flicker Effect */
+        @keyframes flicker {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.25; }
+        }
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-50%, -50%); }
+        }
+        @keyframes scanlines {
+            from { background-position: 0 0; }
+            to { background-position: 0 4px; }
+        }
+        .audio-icon {
+    width: 48px;
+    height: 48px;
+    position: fixed;
+    top: 2vh;
+    left: 2vw;
+    cursor: pointer;
+    z-index: 20;
+    background-size: contain;
+    background-repeat: no-repeat;
+    transition: transform 0.2s;
+}
+
+.audio-icon:hover {
+    transform: scale(1.1);
+}
+
+
+
+.audio-icon.off {
+    background-image: url('mute.png'); /* Replace with your "off" icon URL */
+ 
+
+}
+
+/* On state */
+.audio-icon.on {
+    background-image: url('volume.png'); /* Replace with your "on" icon URL */
+   
+}
+
+        /* Music Toggle Button */
+
+        /* Social Icons Container */
+        .social-icons {
+            position: fixed;
+            top: 2vh;
+            right: 2vw;
+            z-index: 20;
+            display: flex;
+            gap: 35px;
+        }
+        .social-icons a {
+            width: 32px;
+            height: 32px;
+            transition: transform 0.3s;
+        }
+        .social-icons a:hover {
+            transform: scale(1.1);
+        }
+        .social-icons img {
+            width: 48px;
+            height: 48px;
+    
+            transition: transform 0.3s;
+        }
+        .social-icons img:hover {
+            transform: scale(1.1);
+        }
+        .title-logo {
+            font-family: 'Impact', sans-serif;
+            color: #ffffff;
+            background: transparent;
+            position: fixed;
+            z-index: 20;
+            left: 50%;
+            transform: translate(-50%);
+            text-align: center;
+            top: 4vh;
+        }
+        .title-logo h1 {
+            font-size: 3rem;
+            margin-top: 1vh;
+            letter-spacing: 6px;
+    letter-spacing: 0.5rem;
+    text-shadow: 
+        0px 1px 4px rgba(0, 255, 0, 0.5), /* Greenish glow */
+        0px 1px 1px rgba(0, 0, 0, 0.8); /* Dark shadow for depth */
+        }
+        .title-logo p {
+            margin-top: -3vh;
+            font-size: 2rem;
+            font-family: 'Bank', Impact, sans-serif;
+            color: #f7f7f7; /* Greenish color */
+    letter-spacing: 0.2rem;
+    text-shadow: 
+        0px 4px 8px rgba(0, 255, 0, 0.5), /* Greenish glow */
+        0px 1px 1px rgba(0, 0, 0, 0.8); /* Dark shadow for depth */
+        }
+
+        .sticker {
+    position: fixed; /* Ensures the sticker stays in the same position on the screen */
+    right: 1%; /* Adjust distance from the right edge */
+    bottom: 0%; /* Adjust distance from the bottom edge */
+    width: 10vw; /* Proportional to the viewport width for responsiveness */
+    max-width: 150px; /* Optional: Set a max size for larger screens */
+    min-width: 120px; /* Optional: Set a minimum size for smaller screens */
+    height: auto; /* Maintain aspect ratio */
+    z-index: 20; /* Ensure it's above other elements, if needed */
+}
+
+.contract-copy-container {
+    position: fixed;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+
+    color: #fff;
+    padding: 10px 20px;
+
+    border-radius: 5px;
+    display: inline-block;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+
+
+}
+
+.contract-copy-container:hover {
+    background-color: rgba(0, 255, 0, 0.2);
+    color: #00ff00;
+}
+
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r134/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+
+    <div class="crt-overlay"></div>
+    <div class="title-logo">
+        <h1>$COD4</h1> 
+        <p>A PRE OWNED COPY OF COD 4</p> 
+    </div>
+
+
+    <img src="coodgl.png" class="sticker draggable"></img>
+
+
+
+<div id="music-toggle" class="audio-icon off" title="Toggle Music"></div>
+
+    
+    <div class="social-icons">
+        <a href="https://t.me/TenthPrestigeLobby" target="_blank" aria-label="Telegram">
+            <img alt="Telegram logo, white paper airplane icon" src="cd59ht.png" width="32" height="32">
+        </a>
+        <a href="https://x.com/COD4onSOL" target="_blank" aria-label="Twitter">
+            <img alt="Twitter logo, PNG image" src="20p8b6.png" width="32" height="32">
+        </a>
+        <a href="https://dexscreener.com" target="_blank" aria-label="Dexscreener">
+            <img alt="Dexscreener logo, PNG image" src="ehltah.png" width="32" height="32">
+        </a>
+    </div>
+
+
+    <div class="contract-copy-container" id="contract-container">
+        <span id="contract-address">0x1234567890abcdef1234567890abcdef12345678</span>
+    </div>
+    
+
+
+    <script>
+        const contractContainer = document.getElementById('contract-container');
+        const contractAddress = document.getElementById('contract-address').textContent;
+    
+        contractContainer.addEventListener('click', () => {
+            // Copy the contract address to clipboard
+            navigator.clipboard.writeText(contractAddress)
+                .then(() => {
+                    // Provide feedback to the user
+                    contractContainer.textContent = 'Copied!';
+                    setTimeout(() => {
+                        contractContainer.textContent = contractAddress;
+                    }, 2000);
+                })
+                .catch((error) => {
+                    console.error('Failed to copy text: ', error);
+                });
+        });
+    </script>
+    
+    
+    <script>
+        // Set up scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Set up raycaster for click detection
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let modelLoaded = false;
+
+        // Make the video element
+        const video = document.createElement('video');
+        video.src = 'bg.gif';
+        video.crossOrigin = 'anonymous';
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.play().catch((error) => {
+            console.error('Video playback failed:', error);
+        });
+
+        // Create a texture from the video
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        scene.background = videoTexture;
+
+        // Set up lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 0.5);
+        pointLight.position.set(20, 20, 20);
+        scene.add(pointLight);
+
+        // Create a group to hold the model
+        const modelGroup = new THREE.Group();
+        scene.add(modelGroup);
+
+        // Load GLB model
+        const loader = new THREE.GLTFLoader();
+        loader.load('https://files.catbox.moe/vmuyy1.glb', (gltf) => {
+            const model = gltf.scene;
+            
+            // Add model to the group instead of directly to the scene
+            modelGroup.add(model);
+            
+            // Scale the model
+            model.scale.set(3, 3, 3);
+            
+            // Center the model using bounding box
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            
+            // Move the model so its center is at the origin
+            model.position.sub(center);
+            
+            // Adjust the camera position based on the bounding box size
+            const boxSize = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(boxSize.x, boxSize.y, boxSize.z);
+            camera.position.z = maxDim * 2;
+            
+            modelLoaded = true;
+
+            // Make model interactive
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.cursor = 'pointer';
+                }
+            });
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                modelGroup.rotation.y += 0.02;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }, undefined, function(error) {
+            console.error(error);
+        });
+
+        // Click event handler
+        function onModelClick(event) {
+            if (!modelLoaded) return;
+
+            // Calculate mouse position in normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Update the picking ray with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Calculate objects intersecting the picking ray
+            const intersects = raycaster.intersectObjects(modelGroup.children, true);
+
+            if (intersects.length > 0) {
+                // Open link when model is clicked
+                window.open('https://dexscreener.com', '_blank');
+            }
+        }
+
+        // Add click event listener
+        renderer.domElement.addEventListener('click', onModelClick);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        });
+
+
+    const audio = new Audio('593klv.mp3');
+    audio.loop = true;
+
+    const musicToggle = document.getElementById('music-toggle');
+
+    // Toggle music on click
+    musicToggle.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play().catch((error) => {
+                console.error('Audio playback failed:', error);
+            });
+            musicToggle.classList.remove('off');
+            musicToggle.classList.add('on');
+        } else {
+            audio.pause();
+            musicToggle.classList.remove('on');
+            musicToggle.classList.add('off');
+        }
+    });
+
+    </script>
+<script>
+    // Initialize Draggable on the green window
+    Draggable.create(".draggable", {
+        type: "x,y", // Allow dragging on both x and y axes
+        edgeResistance: 0.65, // Adds resistance when dragging near edges
+        bounds: window, // Constrain dragging within the window bounds
+        inertia: true // Allows the window to "slide" after release
+    });
+</script>
+
+
+
+</body>
+</html>
